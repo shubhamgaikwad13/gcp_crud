@@ -17,9 +17,11 @@ class BucketService:
         try:
             # buckets = storage_service.buckets().list(project=PROJECT_ID).execute()['items']
             buckets = cls.model.objects()
-            return jsonify({"buckets": cls.model_schema().dump(obj=buckets, many=True)})
+            buckets = cls.model_schema().dump(obj=buckets, many=True)
+            return buckets
+            # return jsonify({"buckets": cls.model_schema().dump(obj=buckets, many=True)})
         except Exception as e:
-            return jsonify({"error": str(e)})
+            raise Exception(e)
 
     @classmethod
     def create_bucket(cls, data:dict):
@@ -42,13 +44,13 @@ class BucketService:
                     "location": model_data.location,
                     "storageClass": model_data.storageClass
                 }).execute()
-            print(data)
-            cls.model(**data).save()
 
-            return jsonify({"message": response})
+            user = cls.model(**data).save()
+            print("user-save", user)
+            return user
 
         except Exception as e:
-            return jsonify({"error": str(e)})
+            raise Exception(e)
 
     @classmethod
     def delete_bucket(cls, bucket_name):
@@ -58,10 +60,10 @@ class BucketService:
             response = storage_service.buckets().delete(bucket=bucket_name).execute()
             cls.model.objects(name=bucket_name).delete()
             if not response:
-                return jsonify({"message": BUCKET_DELETED_SUCCESSFULLY})
+                return BUCKET_DELETED_SUCCESSFULLY
 
         except Exception as e:
-            return jsonify({"error": str(e)})
+            raise Exception(e)
             # return jsonify({"error": json.loads(e.content)['error']['message']})
 
 

@@ -6,6 +6,7 @@ from ..models.user import User
 
 
 def token_required(roles=list(User.roles.keys())):
+    """Decorator to require login and role based access control"""
     def decorator(func):
         @wraps(func)
         def wrap(*args, **kwargs):

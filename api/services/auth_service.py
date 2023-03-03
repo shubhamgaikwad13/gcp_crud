@@ -14,6 +14,7 @@ class Firebase:
         self.auth = self.firebase.auth()
 
     def sign_up(self, **kwargs):
+        """Creates a nwe user account"""
         try:
             return auth.create_user(**kwargs)
         except Exception as e:

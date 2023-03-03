@@ -11,6 +11,8 @@ class UserService:
 
     @classmethod
     def add_user(cls, data: dict):
+        """Creates a new user account and adds user details to the database"""
+
         try:
             schema = cls.model_schema(many=False)
             model_data = schema.load(data)
@@ -28,6 +30,8 @@ class UserService:
 
     @classmethod
     def login(cls, data: dict):
+        """Authenticates the user and returns an access token"""
+
         try:
             login = cls.auth_firebase.auth.sign_in_with_email_and_password(**data)
 

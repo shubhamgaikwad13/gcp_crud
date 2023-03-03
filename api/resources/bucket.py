@@ -1,5 +1,5 @@
 from flask_restx import Resource, Namespace, fields
-from flask import request
+from flask import request, jsonify
 from ..utils.token_required import token_required
 
 from ..services.bucket import BucketService, BucketAclService
@@ -21,13 +21,20 @@ bucket_delete_parser.add_argument('name', type=str, required=True, help='The buc
 @bucket_api.route("/")
 class Bucket(Resource):
 
+    @classmethod
     def get(self):
-        return BucketService.list_buckets()
+        try:
+            return jsonify({"buckets": BucketService.list_buckets()})
+        except Exception as e:
+            return jsonify({"error": str(e)})
 
     @bucket_api.expect(bucket_model)
     @token_required(roles=['STORAGE_ADMIN'])
     def post(self):
-        return BucketService.create_bucket(bucket_api.payload)
+        try:
+            return jsonify({"user": BucketService.create_bucket(bucket_api.payload)})
+        except Exception as e:
+            return jsonify({"error": str(e)})
 
     # @bucket_api.expect(bucket_delete_parser)
     @bucket_api.param('name', type=str, description='The bucket name')
@@ -36,7 +43,7 @@ class Bucket(Resource):
         args = request.args.to_dict()
 
         # return BucketService.delete_bucket(bucket_delete_parser.parse_args())
-        return BucketService.delete_bucket(args.get('name'))
+        return jsonify({"message": BucketService.delete_bucket(args.get('name'))})
 
 
 @bucket_api.route("/acls")

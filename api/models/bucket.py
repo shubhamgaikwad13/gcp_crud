@@ -3,6 +3,7 @@ from datetime import datetime
 
 
 class Bucket(db.Document):
+    """Model for bucket objects"""
     name = db.StringField()
     storageClass = db.StringField(default="Standard")
     locationType = db.StringField()
@@ -12,7 +13,8 @@ class Bucket(db.Document):
 
 
 class BucketAcl(db.Document):
-    bucket = db.StringField()
+    """Model for BucketACL objects"""
+    bucket = db.ReferenceField('Bucket', dbref=True)
     domain = db.StringField()
     email = db.StringField()
     entity = db.StringField()
