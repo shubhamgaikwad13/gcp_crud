@@ -4,11 +4,12 @@ import logging
 from time import time
 import os
 from flask_migrate import Migrate
-from flask import Flask, g, request, make_response, abort
+from flask import Flask, g, request, make_response, abort, jsonify
 from logzero import logger, loglevel, logfile, formatter
 from .config import Config, app_env
 from .api.resources.api import api
 from .db import mongo_client
+from .api.exceptions import AuthException, NoTokenException, ApiException
 
 
 def _init_logging(app: Flask):
@@ -48,8 +49,27 @@ def create_app() -> Flask:
     mongo_client.init_app(app)
     _init_logging(app)
 
+    @app.errorhandler(ApiException)
+    def api_exception(error):
+        return {"error": str(error)}, error.status_code
+
+    # @app.errorhandler(AuthException)
+    # def auth_exception(error):
+    #     return {"message": error.message, "details": error.data}, error.status_code
+
+    # @app.errorhandler(NoTokenException)
+    # def no_token_exception(error):
+    #     print("handling no token exception error")
+    #     return {"message": error.message}, error.status_code
+
+    # @app.errorhandler(Exception)
+    # def handle_exception(error):
+    #     return jsonify({"message": error.message}), error.status_code
+
     return app
 
 
 if app_env in ['local']:
     app = create_app()
+
+
