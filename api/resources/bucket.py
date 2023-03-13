@@ -19,7 +19,6 @@ bucket_model = bucket_api.model('Bucket',
 bucket_delete_parser = bucket_api.parser()
 bucket_delete_parser.add_argument('name', type=str, required=True, help='The bucket name')
 # bucket_delete_parser.add_argument('')
-# todo: add custom exception, validate resource response,
 
 
 @bucket_api.route("/")
@@ -91,13 +90,13 @@ class BucketExport(Resource):
 
 @bucket_api.route("/search/")
 class BucketSearch(Resource):
-    def get(self):
+    @classmethod
+    def get(cls):
         args = request.args.to_dict()
 
         search_keyword = args.get('search')
         print(search_keyword)
         return BucketService.fetch_by_search_keyword(search_keyword)
-
 
 
 # @bucket_api.route("/filter/")

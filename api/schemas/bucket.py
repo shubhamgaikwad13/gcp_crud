@@ -6,6 +6,8 @@ class BucketSchema(ModelSchema):
     class Meta:
         model = Bucket
 
+    created_by = fields.Nested('UserSchema', many=False, load_only=True, allow_none=True)
+
 
 class BucketAclSchema(ModelSchema):
     class Meta:

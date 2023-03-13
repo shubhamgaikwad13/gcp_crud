@@ -1,5 +1,5 @@
 from ..resources.storage import storage_service
-from flask import jsonify
+from flask import jsonify, request
 from ...settings import PROJECT_ID
 from ..models.bucket import Bucket, BucketAcl
 from ..schemas.bucket import BucketSchema, BucketAclSchema
@@ -9,7 +9,7 @@ from ..exceptions import (ApiException,
                           BucketDoesNotExistException,
                           ValidationException,
                           BucketAlreadyExistsException
-                        )
+                          )
 from marshmallow.exceptions import ValidationError
 from googleapiclient.errors import HttpError
 from http import HTTPStatus
@@ -17,9 +17,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from mongoengine.queryset.visitor import Q
+from .user import UserService
+from .base_service import BaseService
 
 
-class BucketService:
+class BucketService(BaseService):
     model = Bucket
     model_schema = BucketSchema
 
@@ -30,7 +32,7 @@ class BucketService:
         try:
             # buckets = storage_service.buckets().list(project=PROJECT_ID).execute()['items']
             buckets = cls.model.objects()
-            print(kwargs)
+            print(buckets[0].to_json())
             if kwargs.get('location'):
                 buckets = buckets.filter(location=kwargs.get('location'))
 
@@ -43,12 +45,12 @@ class BucketService:
     @classmethod
     def create_bucket(cls, data: dict):
         """Creates a new gcp bucket in project"""
-
         try:
             schema = cls.model_schema(many=False)
             model_data = schema.load(data)
 
-            bucket = cls.model.get_by_id(model_data.name)
+            bucket = cls.fetch_by(name=model_data.name)
+            data.update({'created_by': UserService.get_user_id()})
 
             if bucket:
                 raise BucketAlreadyCreatedException()
@@ -72,7 +74,6 @@ class BucketService:
                 return bucket
 
         except ValidationError as e:
-            print('this: ', e)
             raise ValidationException(e)
         except HttpError as e:
             if e.status_code == HTTPStatus.CONFLICT:
@@ -87,9 +88,9 @@ class BucketService:
 
         if not bucket:
             raise BucketDoesNotExistException()
-
+        print(recursive)
         try:
-            if bucket and recursive == 'true':
+            if bucket and recursive == 'True':
                 # Deletes all objects from the bucket recursively
                 objects = storage_service.objects().list(bucket=bucket_name).execute()
 
@@ -124,8 +125,10 @@ class BucketService:
         if search_keyword:
             query = cls.model.objects(Q(name__icontains=search_keyword) | Q(storageClass__icontains=search_keyword))
 
-        buckets = cls.model_schema().dump(query, many=True)
-        return buckets
+            buckets = cls.model_schema().dump(query, many=True)
+
+            return buckets
+        return []
 
 
 class BucketExportService:
@@ -154,12 +157,11 @@ class BucketExportService:
         fig, ax = plt.subplots(figsize=(12, 4))
         ax.axis('tight')
         ax.axis('off')
-        the_table = ax.table(cellText=dataframe.values, colLabels=dataframe.columns, loc='center')
+        table = ax.table(cellText=dataframe.values, colLabels=dataframe.columns, loc='center')
 
         pp = PdfPages("buckets.pdf")
         pp.savefig(fig, bbox_inches='tight')
         pp.close()
-
 
 
 class BucketAclService:
