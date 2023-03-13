@@ -1,8 +1,10 @@
 from ...db import mongo_client as db
 from datetime import datetime
+from .user import User
+from .base_model import BaseModel
 
 
-class Bucket(db.Document):
+class Bucket(BaseModel, db.Document):
     """Model for bucket objects"""
 
     name = db.StringField(unique=True)
@@ -12,6 +14,7 @@ class Bucket(db.Document):
     uniformBucketLevelAccessEnabled = db.BooleanField()
     created_at = db.DateTimeField(default=datetime.utcnow)
     updated_at = db.DateTimeField(default=datetime.utcnow)
+    created_by = db.ReferenceField(User, dbref=True)
 
     @classmethod
     def get_by_id(cls, id):
