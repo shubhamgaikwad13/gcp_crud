@@ -1,7 +1,8 @@
 from ..models.user import User
 from ..schemas.user import UserSchema
 from .auth_service import firebase_auth
-from flask import jsonify
+from flask import jsonify, request
+from firebase_admin import auth
 
 
 class UserService:
@@ -41,6 +42,7 @@ class UserService:
             mongo_user = cls.model.objects(firebase_uid=uid).first()
 
             custom_claims = {
+                'user_id': str(mongo_user.id),
                 "role": mongo_user.role
             }
 
@@ -50,3 +52,12 @@ class UserService:
 
         except Exception as e:
             raise Exception(str(e))
+
+    @classmethod
+    def get_user_id(cls):
+        token = request.headers.get("Authorization").removeprefix("Bearer").strip()
+        custom_token = cls.auth_firebase.auth.sign_in_with_custom_token(token)
+        user = auth.verify_id_token(custom_token['idToken'])
+        mongo_user = cls.model.fetch_by(firebase_uid=user['user_id']).first()
+
+        return mongo_user.id
